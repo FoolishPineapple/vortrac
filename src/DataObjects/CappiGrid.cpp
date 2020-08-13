@@ -57,19 +57,45 @@ void CappiGrid::gridRadarData(RadarData *radarData, QDomElement cappiConfig,floa
 
     // Get the dimensions from the configuration
     // all dimensions are in units of cappi grid points
-    iDim = cappiConfig.firstChildElement("xdim").text().toFloat();
-    jDim = cappiConfig.firstChildElement("ydim").text().toFloat();
-    kDim = cappiConfig.firstChildElement("zdim").text().toFloat();
+    iDim = cappiConfig.firstChildElement("xdim").text().toFloat(); // default is 250 km
+    jDim = cappiConfig.firstChildElement("ydim").text().toFloat(); // default is 250 km
+    kDim = cappiConfig.firstChildElement("zdim").text().toFloat(); // default is 1 km i.e, look only at one layer at a time. 
+    // should kDim==kGridsp? -BS
 
+    //TODO
+    //Start of the chain of fixed grid spacing. Calls on the config file to set the values. By default they are set to 1km- BS 
     // all grid spacings are in units of km
-    iGridsp = cappiConfig.firstChildElement("xgridsp").text().toFloat();
-    jGridsp = cappiConfig.firstChildElement("ygridsp").text().toFloat();
-    kGridsp = cappiConfig.firstChildElement("zgridsp").text().toFloat();
+    iGridsp = cappiConfig.firstChildElement("xgridsp").text().toFloat();//default is 1 km
+    jGridsp = cappiConfig.firstChildElement("ygridsp").text().toFloat();//default is 1km
+    kGridsp = cappiConfig.firstChildElement("zgridsp").text().toFloat();//default is 1km
+
+
+    //Check that the grid sp is within the desired bounds. All units in terms of km. -BS
+    if (iGridsp!=jGridsp)
+    {
+        //It seems that the x and y spacing must be identical -BS
+        Message::toScreen("x and y grid spacing are not identical. Set to x grid spacing by default.");
+        jGridsp=iGridsp;
+    }
+
+    if (iGridsp<.01||jGridsp<.01||kGridsp<.01)
+    {
+
+        Message::toScreen("Spacing bounds too low. Set by default to 10 m.");
+        iGridsp=jGridsp=kGridsp=.01;
+    }
+    else if (iGridsp>2||jGridsp>2||kGridsp>2)
+    {
+        Message::toScreen("Spacing bounds too high. Set by default to 2 km.");
+        iGridsp=jGridsp=kGridsp=2.0;
+    }
+
 
     setDisplayIndex(cappiConfig, kGridsp);
     
     // Should this be get cartesian point? Don't we use the grid spacing
     // in that calculation? -LM 6/11/07
+    //relDist (float) is in km--BS
     relDist = getCartesianPoint(radarData->getRadarLat(), radarData->getRadarLon(), vortexLat, vortexLon);
 
     float rXDistance =  0;
@@ -80,12 +106,24 @@ void CappiGrid::gridRadarData(RadarData *radarData, QDomElement cappiConfig,floa
     // TODO This sets originLon and originLat. (rX and rY Distance are not modified. Why passing a pointer?)
     setLatLonOrigin(radarData->getRadarLat(), radarData->getRadarLon(), &rXDistance, &rYDistance);
 
+
+    //TODO ??
+    //This adjusts all values to integers. Is this a problem??--BS
     // Defines iteration indexes for cappi grid
 
+    /*
     xmin = nearbyintf(relDist[0] - (iDim / 2) * iGridsp);
     xmax = nearbyintf(relDist[0] + (iDim / 2) * iGridsp);
     ymin = nearbyintf(relDist[1] - (jDim / 2) * jGridsp);
     ymax = nearbyintf(relDist[1] + (jDim / 2) * jGridsp);
+    */
+    //Updated for keeping xmin/max and ymin/max as floats
+    //They are declared in Gridded data.h and are floats by default -BS
+    xmin = relDist[0] - (iDim / 2) * iGridsp;
+    xmax = relDist[0] + (iDim / 2) * iGridsp;
+    ymin = relDist[1] - (jDim / 2) * jGridsp;
+    ymax = relDist[1] + (jDim / 2) * jGridsp;    
+
 
     //  Message::toScreen("Xmin = "+QString().setNum(xmin)+" Xmax = "+QString().setNum(xmax)+" Ymin = "+QString().setNum(ymin)+" Ymax = "+QString().setNum(ymax));
 
@@ -113,19 +151,29 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
 
     // Calculate radius of influence
     float hROI = 2.0;
-    float vROI = 1.0;
-    float xRadius = (iGridsp * iGridsp) * (hROI*hROI);
-    float yRadius = (jGridsp * jGridsp) * (hROI*hROI);
-    float zRadius = (kGridsp * kGridsp) * (vROI*vROI);
-    float RSquare = xRadius + yRadius + zRadius;
-    int maxIplus = (int)(RSquare/iGridsp);
-    int maxJplus = (int)(RSquare/jGridsp);
-    int maxKplus = (int)(RSquare/kGridsp);
+    //float vROI = 1.0;// redundant -BS
+    float xRadius = (iGridsp * iGridsp) * (hROI*hROI); //range is .0004- 16 with new spacing values. default is 4
+    float yRadius = (jGridsp * jGridsp) * (hROI*hROI); //range is .0004- 16 with new spacing values. default is 4
+    float zRadius = (kGridsp * kGridsp); //* (vROI*vROI); //range is .0001- 4 with new spacing values. default is 1
+    float RSquare = xRadius + yRadius + zRadius;// Range is .0009-36 with new spacing. default is 9
+    //What is maxIplus?
+    //Plus or minus for i,j, and k coords for errors
 
+    /*
+    int maxIplus = (int)(RSquare/iGridsp); //min= 9 (1), max=9. default is 9
+    int maxJplus = (int)(RSquare/jGridsp); //min= 9 (1), max=9
+    int maxKplus = (int)(RSquare/kGridsp); //min= 1.2, max=12
+    */
+    // New Range is .09-18
+    //Switched maxI,J,K to float to accomadate the new bounds.--BS
+    float maxIplus = RSquare/iGridsp;// .09-18
+    float maxJplus = RSquare/jGridsp; //.09-18
+    float maxKplus = RSquare/kGridsp; //.09-18
     // Initialize weights
+    // might need +1 for typecasting 
     for (int k = 0; k < int(kDim); k++) {
         for (int j = 0; j < int(jDim); j++) {
-            for (int i = 0; i < int(iDim); i++) {
+            for (int i = 0; i < int(iDim); i++) {  
                 refValues[i][j][k].sumRef = 0;
                 refValues[i][j][k].weight = 0;
                 velValues[i][j][k].sumVel = 0;
@@ -150,13 +198,13 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
     }
 
     // Find good values
+    //START GRID VAR DEP-BS
     for (int n = 0; n < radarData->getNumRays(); n++) {
         Ray* currentRay = radarData->getRay(n);
         float theta = deg2rad * fmodf((450. - currentRay->getAzimuth()),360.);
         float phi = deg2rad * (90. - (currentRay->getElevation()));
 
-        if ((currentRay->getRef_numgates() > 0) and
-                (gridReflectivity)) {
+        if ((currentRay->getRef_numgates() > 0) and (gridReflectivity)) {
 
             float* refData = currentRay->getRefData();
             for (int g = 0; g <= (currentRay->getRef_numgates()-1); g++) {
@@ -178,25 +226,25 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
                 float k = (z - zmin)/kGridsp;
                 float RSquareLinear = RSquare*range*range / 30276.0;
                 for (int kplus = -maxKplus; kplus <= maxKplus; kplus++) {
-                for (int jplus = -maxJplus; jplus <= maxJplus; jplus++) {
-                    for (int iplus = -maxIplus; iplus <= maxIplus; iplus++) {
-                        int iIndex = (int)(i+iplus);
-                        int jIndex = (int)(j+jplus);
-                        int kIndex = (int)(k+kplus);
-                        if ((iIndex < 0) or (iIndex > (int)iDim)) { continue; }
-                        if ((jIndex < 0) or (jIndex > (int)jDim)) { continue; }
-                        if ((kIndex < 0) or (kIndex > (int)kDim)) { continue; }
+                    for (int jplus = -maxJplus; jplus <= maxJplus; jplus++) {
+                        for (int iplus = -maxIplus; iplus <= maxIplus; iplus++) {
+                            int iIndex = (int)(i+iplus);
+                            int jIndex = (int)(j+jplus);
+                            int kIndex = (int)(k+kplus);
+                            if ((iIndex < 0) or (iIndex > (int)iDim)) { continue; }
+                            if ((jIndex < 0) or (jIndex > (int)jDim)) { continue; }
+                            if ((kIndex < 0) or (kIndex > (int)kDim)) { continue; }
 
-                        float dx = (i - (int)(i+iplus))*iGridsp;
-                        float dy = (j - (int)(j+jplus))*jGridsp;
-                        float dz = (k - (int)(k+kplus))*kGridsp;
-                        float rSquare = (dx*dx) + (dy*dy) + (dz*dz);
-                        if (rSquare > RSquareLinear) { continue; }
-                        float weight = (RSquareLinear - rSquare) / (RSquareLinear + rSquare);
-                        refValues[iIndex][jIndex][kIndex].weight += weight;
-                        refValues[iIndex][jIndex][kIndex].sumRef += weight*refData[g];
+                            float dx = (i - (int)(i+iplus))*iGridsp;
+                            float dy = (j - (int)(j+jplus))*jGridsp;
+                            float dz = (k - (int)(k+kplus))*kGridsp;
+                            float rSquare = (dx*dx) + (dy*dy) + (dz*dz);
+                            if (rSquare > RSquareLinear) { continue; }     
+                            float weight = (RSquareLinear - rSquare) / (RSquareLinear + rSquare);
+                            refValues[iIndex][jIndex][kIndex].weight += weight;
+                            refValues[iIndex][jIndex][kIndex].sumRef += weight*refData[g];
+                        }
                     }
-                }
                 }
             }
 
@@ -214,6 +262,9 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
                 float range = float(currentRay->getFirst_vel_gate() +
                                     (g * currentRay->getVel_gatesp()))/1000.;
                 float x = range*sin(phi)*cos(theta);
+
+                //TODO 
+                //Does the grid spacing affect the rsults of this? --BS
                 if ((x < (xmin - iGridsp)) or x > (xmax + iGridsp)) { continue; }
                 float y = range*sin(phi)*sin(theta);
                 if ((y < (ymin - jGridsp)) or y > (ymax + jGridsp)) { continue; }
@@ -258,6 +309,7 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
         currentRay = NULL;
         //delete currentRay;
     }
+    //END GRID VAR DEP-BS
 
     //Message::toScreen("# of Reflectivity gates used in CAPPI = "+QString().setNum(r));
     //Message::toScreen("# of Velocity gates used in CAPPI = "+QString().setNum(v));

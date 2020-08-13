@@ -52,6 +52,8 @@ float *RadxData::getRayData(RadxRay *fileRay, const char *fieldName)
     return NULL;
 
   RadxField *field = fileRay->getField(name_it->second);
+  //Error with getField -BS 
+  //RadxField *field =fileRay->getFieldNameMap();
   if (field == NULL)
     return NULL;
 

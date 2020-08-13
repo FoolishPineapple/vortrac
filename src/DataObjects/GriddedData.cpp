@@ -18,7 +18,7 @@
 #include <cmath>
 
 GriddedData::GriddedData()
-{
+{ 
 
     Pi = 3.141592653589793238462643;
     deg2rad = Pi/180.;
