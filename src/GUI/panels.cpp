@@ -747,19 +747,19 @@ CappiPanel::CappiPanel():AbstractPanel()
     QLabel *xGrid = new QLabel(tr("X Grid Spacing (km)"));
     xGridBox = new QDoubleSpinBox;
     xGridBox->setDecimals(1);
-    xGridBox->setRange(1,1);
+    xGridBox->setRange(.1,10);
     xGridBox->setValue(1);
 
     QLabel *yGrid = new QLabel(tr("Y Grid Spacing (km)"));
     yGridBox = new QDoubleSpinBox;
     yGridBox->setDecimals(1);
-    yGridBox->setRange(1,1);
+    yGridBox->setRange(.1,10);
     yGridBox->setValue(1);
 
     QLabel *zGrid = new QLabel(tr("Z Grid Spacing (km)"));
     zGridBox = new QDoubleSpinBox;
     zGridBox->setDecimals(1);
-    zGridBox->setRange(1,3);
+    zGridBox->setRange(.1,10);
     zGridBox->setValue(1);
 
     QLabel *zMin = new QLabel(tr("Z Minimum (km)"));

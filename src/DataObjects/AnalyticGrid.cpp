@@ -74,7 +74,7 @@ bool AnalyticGrid::getConfigInfo(Configuration* mainConfig,
 
   kDim = mainConfig->getParam(cappi, "zdim").toFloat();
   // kDim: Number of data points running on the k-axis
-
+  //Get grid spacing values -BS
   iGridsp = mainConfig->getParam(cappi, "xgridsp").toFloat();
   jGridsp = mainConfig->getParam(cappi, "ygridsp").toFloat();
   kGridsp = mainConfig->getParam(cappi, "zgridsp").toFloat();
@@ -103,7 +103,7 @@ bool AnalyticGrid::getConfigInfo(Configuration* mainConfig,
   setLatLonOrigin(rLat, rLon,&rXDistance,&rYDistance);
 
   // Defines iteration indexes for cappi grid
-
+  //Grid spaceing needs to be adjustsed and scale based on the x and y values
   xmin = nearbyintf(radLocation[0] - (iDim/2)*iGridsp);
   xmax = nearbyintf(radLocation[0] + (iDim/2)*iGridsp);
   ymin = nearbyintf(radLocation[1] - (jDim/2)*jGridsp);

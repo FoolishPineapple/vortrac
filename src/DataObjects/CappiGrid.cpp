@@ -71,19 +71,21 @@ void CappiGrid::gridRadarData(RadarData *radarData, QDomElement cappiConfig,floa
 
 
     //Check that the grid sp is within the desired bounds. All units in terms of km. -BS
+    //Do we need to work with cubic sections or can z be different from x and y
     if (iGridsp!=jGridsp)
     {
         //It seems that the x and y spacing must be identical -BS
         Message::toScreen("x and y grid spacing are not identical. Set to x grid spacing by default.");
         jGridsp=iGridsp;
     }
-
+    //Test lower bound
     if (iGridsp<.01||jGridsp<.01||kGridsp<.01)
     {
 
         Message::toScreen("Spacing bounds too low. Set by default to 10 m.");
         iGridsp=jGridsp=kGridsp=.01;
     }
+    //Test upper bound
     else if (iGridsp>2||jGridsp>2||kGridsp>2)
     {
         Message::toScreen("Spacing bounds too high. Set by default to 2 km.");
@@ -309,7 +311,7 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
         currentRay = NULL;
         //delete currentRay;
     }
-    //END GRID VAR DEP-BS
+   
 
     //Message::toScreen("# of Reflectivity gates used in CAPPI = "+QString().setNum(r));
     //Message::toScreen("# of Velocity gates used in CAPPI = "+QString().setNum(v));
@@ -446,7 +448,7 @@ void CappiGrid::CressmanInterpolation(RadarData *radarData)
             }
         }
     }
-
+ //END GRID VAR DEP-BS
     // Smooth local outliers
     for (int k = 0; k < int(kDim); k++) {
         // float sumtexture = 0;
