@@ -78,19 +78,48 @@ void CappiGrid::gridRadarData(RadarData *radarData, QDomElement cappiConfig,floa
         Message::toScreen("x and y grid spacing are not identical. Set to x grid spacing by default.");
         jGridsp=iGridsp;
     }
-    //Test lower bound
-    if (iGridsp<.01||jGridsp<.01||kGridsp<.01)
+    //Test bounds X
+    if (iGridsp<.01)
     {
 
-        Message::toScreen("Spacing bounds too low. Set by default to 10 m.");
-        iGridsp=jGridsp=kGridsp=.01;
+        Message::toScreen("X spacing bounds too low. Set to minimum of 10 m.");
+        iGridsp=.01;
     }
-    //Test upper bound
-    else if (iGridsp>2||jGridsp>2||kGridsp>2)
+    else if (iGridsp>2)
     {
-        Message::toScreen("Spacing bounds too high. Set by default to 2 km.");
-        iGridsp=jGridsp=kGridsp=2.0;
+        Message::toScreen("X spacing bounds too high. Set to maximum of 2 km.");
+        iGridsp=2.0;        
     }
+
+    //Test bounds Y
+
+    if (jGridsp<.01)
+    {
+
+        Message::toScreen("Y spacing bounds too low. Set to minimum of 10 m.");
+        jGridsp=.01;
+    }
+    else if (jGridsp>2)
+    {
+        Message::toScreen("Y spacing bounds too high. Set to maximum of 2 km.");
+        jGridsp=2.0;        
+    }
+
+    //Test bounds Z
+
+    if (kGridsp<.01)
+    {
+
+        Message::toScreen("Z spacing bounds too low. Set to minimum of 10 m.");
+        kGridsp=.01;
+    }
+    else if (kGridsp>3)
+    {
+        Message::toScreen("Z spacing bounds too high. Set to maximum of 3 km.");
+        kGridsp=3.0
+    }
+        
+
 
 
     setDisplayIndex(cappiConfig, kGridsp);
@@ -100,8 +129,8 @@ void CappiGrid::gridRadarData(RadarData *radarData, QDomElement cappiConfig,floa
     //relDist (float) is in km--BS
     relDist = getCartesianPoint(radarData->getRadarLat(), radarData->getRadarLon(), vortexLat, vortexLon);
 
-    float rXDistance =  0;
-    float rYDistance =  0;
+    float rXDistance =  0.0;
+    float rYDistance =  0.0;
 
     // connects the (0,0) point on the cappi grid, to the latitude and
     // longitude of the radar.

@@ -743,24 +743,31 @@ CappiPanel::CappiPanel():AbstractPanel()
     zDimBox->setDecimals(0);
     zDimBox->setRange(1,GriddedData::getMaxKDim());
     zDimBox->setValue(3);
+    
+    // Adjusted the grid spacing input to go from .1-2 km
+    // in increments of .01
+    //BS
 
     QLabel *xGrid = new QLabel(tr("X Grid Spacing (km)"));
     xGridBox = new QDoubleSpinBox;
-    xGridBox->setDecimals(1);
-    xGridBox->setRange(.1,10);
+    xGridBox->setDecimals(2);
+    xGridBox->setRange(.1,2);
     xGridBox->setValue(1);
 
     QLabel *yGrid = new QLabel(tr("Y Grid Spacing (km)"));
     yGridBox = new QDoubleSpinBox;
-    yGridBox->setDecimals(1);
-    yGridBox->setRange(.1,10);
+    yGridBox->setDecimals(2);
+    yGridBox->setRange(.01,2);
     yGridBox->setValue(1);
 
     QLabel *zGrid = new QLabel(tr("Z Grid Spacing (km)"));
     zGridBox = new QDoubleSpinBox;
-    zGridBox->setDecimals(1);
-    zGridBox->setRange(.1,10);
+    zGridBox->setDecimals(2);
+    zGridBox->setRange(.01,3);
     zGridBox->setValue(1);
+
+    // End grid spacing input changes
+    //BS
 
     QLabel *zMin = new QLabel(tr("Z Minimum (km)"));
     zMinBox = new QDoubleSpinBox;
